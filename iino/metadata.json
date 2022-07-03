@@ -1,0 +1,14 @@
+{
+  "name": "iino",
+  "version": "1.1.0",
+  "description": "",
+  "attribution": "Rendered with <a href=\"https://www.maptiler.com/desktop/\">MapTiler Desktop</a>",
+  "type": "baselayer",
+  "format": "pbf",
+  "minzoom": "10",
+  "maxzoom": "15",
+  "scale": "1.000000",
+  "bounds": [139.57224000, 36.19337700, 139.64897000, 36.22575300],
+  "profile": "mercator",
+  "vector_layers": [{"id":"iino_contour","description":"","minzoom":10, "maxzoom":15,"fields":{"Name":"String","description":"String","timestamp":"String","begin":"String","end":"String","altitudeMode":"String","tessellate":"Number","extrude":"Number","visibility":"Number","drawOrder":"Number","icon":"String"}}]
+}

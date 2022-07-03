@@ -1,0 +1,14 @@
+{
+  "name": "uzura",
+  "version": "1.1.0",
+  "description": "",
+  "attribution": "Rendered with <a href=\"https://www.maptiler.com/desktop/\">MapTiler Desktop</a>",
+  "type": "baselayer",
+  "format": "pbf",
+  "minzoom": "10",
+  "maxzoom": "15",
+  "scale": "1.000000",
+  "bounds": [139.45632000, 36.25856600, 139.53306000, 36.29088000],
+  "profile": "mercator",
+  "vector_layers": [{"id":"uzura_contour","description":"","minzoom":10, "maxzoom":15,"fields":{"Name":"String","description":"String","timestamp":"String","begin":"String","end":"String","altitudeMode":"String","tessellate":"Number","extrude":"Number","visibility":"Number","drawOrder":"Number","icon":"String"}}]
+}

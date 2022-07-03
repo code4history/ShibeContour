@@ -1,0 +1,14 @@
+{
+  "name": "nobe",
+  "version": "1.1.0",
+  "description": "",
+  "attribution": "Rendered with <a href=\"https://www.maptiler.com/desktop/\">MapTiler Desktop</a>",
+  "type": "baselayer",
+  "format": "pbf",
+  "minzoom": "10",
+  "maxzoom": "15",
+  "scale": "1.000000",
+  "bounds": [139.43791000, 36.19916100, 139.51465000, 36.23153500],
+  "profile": "mercator",
+  "vector_layers": [{"id":"nobe_contour","description":"","minzoom":10, "maxzoom":15,"fields":{"Name":"String","description":"String","timestamp":"String","begin":"String","end":"String","altitudeMode":"String","tessellate":"Number","extrude":"Number","visibility":"Number","drawOrder":"Number","icon":"String"}}]
+}
