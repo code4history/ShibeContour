@@ -31,6 +31,10 @@ if (window.location.protocol == 'file:' && window.location.search != '?skipalert
 var mapExtent = ol.proj.transformExtent([139.498380, 36.228800, 139.575110, 36.261161], 'EPSG:4326', 'EPSG:3857');
 const mapMinZoom = 10;
 const mapMaxZoom = 15;
+const pbfminzoom = 10;
+const pbfmaxzoom = 15;
+const tintminzoom = 8;
+const tintmaxzoom = 14;
 
 // Prepare style list
 var layerList = document.getElementById('layerList');
@@ -38,48 +42,79 @@ var layerStyleMap = {}, layerStyleVisibility = {};
 var vlayers = [
   {
     "id":"yagoe",
-    "pbf": "yagoe/{z}/{x}/{y}.pbf",
-    "tint": "https://grt.code4history.dev/cont7/18/1/{z}/{x}/{y}",
+    "tintminheight": 18,
     "title": "館林市本町2丁目（谷越町）侍辺",
     "extent": [139.498380, 36.228800, 139.575110, 36.261161],
-    "center": [139.536745, 36.244980],
-    "description":"",
-    "pbfminzoom":10,
-    "pbfmaxzoom":15,
-    "tintminzoom":8,
-    "tintmaxzoom":14
+    "center": [139.536745, 36.244980]
+  },
+  {
+    "id":"akouda",
+    "tintminheight": 16, //15,
+    "title": "館林市赤生田本町 侍辺",
+    "extent": [139.524730, 36.204321, 139.601460, 36.236692],
+    "center": [139.563095, 36.220506]
+  },
+  {
+    "id":"narushima",
+    "tintminheight": 22,
+    "title": "館林市成島町 大志辺",
+    "extent": [139.456450, 36.228488, 139.533190, 36.260850],
+    "center": [139.494820, 36.244669]
+  },
+  {
+    "id":"nobe",
+    "tintminheight": 17,
+    "title": "館林市野辺町 志部",
+    "extent": [139.437910, 36.199161, 139.514650, 36.231535],
+    "center": [139.476280, 36.215348]
+  },
+  {
+    "id":"iino",
+    "tintminheight": 13,
+    "title": "邑楽郡板倉町飯野 侍辺",
+    "extent": [139.572240, 36.193377, 139.648970, 36.225753],
+    "center": [139.610605, 36.209565]
   },
   {
     "id":"uzura",
-    "pbf": "uzura/{z}/{x}/{y}.pbf",
-    //"tint": "https://grt.code4history.dev/cont7/21/1/{z}/{x}/{y}",
-    "tint": "https://grt.code4history.dev/cont7/22/1/{z}/{x}/{y}",
+    "tintminheight": 22, //21
     "title": "邑楽郡邑楽町鶉 上志辺 下志辺",
     "extent": [139.456320, 36.258566, 139.533060, 36.290880],
-    "center": [139.494690, 36.274723],
-    "description":"",
-    "pbfminzoom":10,
-    "pbfmaxzoom":15,
-    "tintminzoom":8,
-    "tintmaxzoom":14,
+    "center": [139.494690, 36.274723]
+  },
+  {
+    "id":"oizumi",
+    "tintminheight": 30,
+    "title": "邑楽郡大泉町上小泉/坂田 志部",
+    "extent": [139.369810, 36.245069, 139.446540, 36.277423],
+    "center": [139.408175, 36.261246]
+  },
+  {
+    "id":"akaiwa",
+    "tintminheight": 20, //19,
+    "title": "邑楽郡千代田町赤岩 湿辺",
+    "extent": [139.406540, 36.195698, 139.483280, 36.228073],
+    "center": [139.444910, 36.211885]
   }
 ];
 
 let currentLayer;
 vlayers.forEach(function(vlayer) {
-  const layerId = vlayer.id
+  const layerId = vlayer.id;
+  const pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
+  const tinturl = `https://grt.code4history.dev/cont7/${vlayer.tintminheight}/1/{z}/{x}/{y}`;
 
   vlayer.pbfLayer = new ol.layer.VectorTile({
     source: new ol.source.VectorTile({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
       format: new ol.format.MVT(),
       tileGrid: new ol.tilegrid.createXYZ({
-        minZoom: vlayer.pbfminzoom,
-        maxZoom: vlayer.pbfmaxzoom,
+        minZoom: pbfminzoom,
+        maxZoom: pbfmaxzoom,
         tileSize: 512,
       }),
       tilePixelRatio: 8,
-      url: vlayer.pbf,
+      url: pbfurl,
     }),
     opacity: 0.7,
     extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857'),
@@ -94,11 +129,11 @@ vlayers.forEach(function(vlayer) {
   vlayer.tintLayer = new ol.layer.Tile({
     source: new ol.source.XYZ({
       attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
-      url: vlayer.tint,
+      url: tinturl,
       projection: "EPSG:3857",
       tileGrid: new ol.tilegrid.createXYZ({
-        minZoom: vlayer.tintminzoom,
-        maxZoom: vlayer.tintmaxzoom,
+        minZoom: tintminzoom,
+        maxZoom: tintmaxzoom,
         tileSize: 256,
       }),
     }),
