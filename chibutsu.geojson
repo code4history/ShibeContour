@@ -1,0 +1,16 @@
+{
+"type": "FeatureCollection",
+"name": "chibutsu",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "名称": "夜明稲荷 (加法師)" }, "geometry": { "type": "Point", "coordinates": [ 139.53986096681848, 36.249600244851081 ] } },
+{ "type": "Feature", "properties": { "名称": "宵稲荷 (侍辺)" }, "geometry": { "type": "Point", "coordinates": [ 139.533546634796608, 36.245090519462842 ] } },
+{ "type": "Feature", "properties": { "名称": "小柳清水" }, "geometry": { "type": "Point", "coordinates": [ 139.533960800660367, 36.250879303657143 ] } },
+{ "type": "Feature", "properties": { "名称": "館林城" }, "geometry": { "type": "Point", "coordinates": [ 139.54449370087642, 36.243986887967495] } },
+{ "type": "Feature", "properties": { "名称": "飯野城" }, "geometry": { "type": "Point", "coordinates": [ 139.607744788776188, 36.208229807657631 ] } },
+{ "type": "Feature", "properties": { "名称": "侍辺城" }, "geometry": { "type": "Point", "coordinates": [ 139.5588853175281, 36.22072715837274 ] } },
+{ "type": "Feature", "properties": { "名称": "成島城" }, "geometry": { "type": "Point", "coordinates": [ 139.49656418392226, 36.2432814263524 ] } },
+{ "type": "Feature", "properties": { "名称": "小泉城" }, "geometry": { "type": "Point", "coordinates": [ 139.41399540375116, 36.26140986157402 ] } },
+{ "type": "Feature", "properties": { "名称": "赤岩城" }, "geometry": { "type": "Point", "coordinates": [ 139.43960260011636, 36.20831271303201 ] } }
+]
+}

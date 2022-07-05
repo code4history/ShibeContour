@@ -42,6 +42,8 @@ var vlayers = [
   {
     "id":"yagoe",
     "tintminheight": 18,
+    "shibe": ["館林町谷越町"],
+    "chibutsu": ["夜明稲荷 (加法師)","宵稲荷 (侍辺)","小柳清水","館林城"],
     "title": "館林市本町2丁目（谷越町）侍辺",
     "extent": [139.498380, 36.228800, 139.575110, 36.261161],
     "center": [139.536745, 36.244980]
@@ -49,6 +51,8 @@ var vlayers = [
   {
     "id":"akouda",
     "tintminheight": 16, //15,
+    "shibe": ["赤生田村侍邊"],
+    "chibutsu": ["侍辺城"],
     "title": "館林市赤生田本町 侍辺",
     "extent": [139.524730, 36.204321, 139.601460, 36.236692],
     "center": [139.563095, 36.220506]
@@ -56,6 +60,8 @@ var vlayers = [
   {
     "id":"narushima",
     "tintminheight": 22,
+    "shibe": ["成島村大志邊"],
+    "chibutsu": ["成島城"],
     "title": "館林市成島町 大志辺",
     "extent": [139.456450, 36.228488, 139.533190, 36.260850],
     "center": [139.494820, 36.244669]
@@ -63,6 +69,7 @@ var vlayers = [
   {
     "id":"nobe",
     "tintminheight": 17,
+    "shibe": ["野邊村志部"],
     "title": "館林市野辺町 志部",
     "extent": [139.437910, 36.199161, 139.514650, 36.231535],
     "center": [139.476280, 36.215348]
@@ -70,6 +77,8 @@ var vlayers = [
   {
     "id":"iino",
     "tintminheight": 13,
+    "shibe": ["飯野村侍邊"],
+    "chibutsu": ["飯野城"],
     "title": "邑楽郡板倉町飯野 侍辺",
     "extent": [139.572240, 36.193377, 139.648970, 36.225753],
     "center": [139.610605, 36.209565]
@@ -77,13 +86,16 @@ var vlayers = [
   {
     "id":"uzura",
     "tintminheight": 22, //21
+    "shibe": ["鶉村上志邊", "鶉村下志邊"],
     "title": "邑楽郡邑楽町鶉 上志辺 下志辺",
     "extent": [139.456320, 36.258566, 139.533060, 36.290880],
     "center": [139.494690, 36.274723]
   },
   {
     "id":"oizumi",
-    "tintminheight": 30,
+    "tintminheight": 32, //30,
+    "shibe": ["上小泉村、坂田村志部"],
+    "chibutsu": ["小泉城"],
     "title": "邑楽郡大泉町上小泉/坂田 志部",
     "extent": [139.369810, 36.245069, 139.446540, 36.277423],
     "center": [139.408175, 36.261246]
@@ -91,6 +103,8 @@ var vlayers = [
   {
     "id":"akaiwa",
     "tintminheight": 20, //19,
+    "shibe": ["赤岩村湿邊"],
+    "chibutsu": ["赤岩城"],
     "title": "邑楽郡千代田町赤岩 湿辺",
     "extent": [139.406540, 36.195698, 139.483280, 36.228073],
     "center": [139.444910, 36.211885]
@@ -189,6 +203,10 @@ function itemSelector(layerId) {
   currentLayer = vlayer;
   map.getLayers().insertAt(1, vlayer.tintLayer);
   map.getLayers().insertAt(2, vlayer.pbfLayer);
+  shibeLayer.changed();
+  chibutsuLayer.changed();
+  yabaLayer.changed();
+  hanumaLayer.changed();
   item.className = '';
   map.getView().setCenter(ol.proj.fromLonLat(vlayer.center));
 }
@@ -203,6 +221,113 @@ map = new ol.Map({
     minZoom: mapMinZoom,
   })
 });
+
+const shibeLayer = new ol.layer.VectorTile({
+  source: new ol.source.VectorTile({
+    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+    format: new ol.format.GeoJSON(),
+    tilePixelRatio: 8,
+    url: "./shibe.geojson",
+  }),
+  style: function(feature, resolution) {
+    const shibeKey = `${feature.get("町村")}${feature.get("字名")}`
+    if (currentLayer.shibe.indexOf(shibeKey) < 0) return null;
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
+      fill: new ol.style.Fill({color: "#ff000066", width: 3}),
+      text: new ol.style.Text({
+        font: "Bold 20px/1 Verdana",
+        text: `${feature.get("町村")}${feature.get("字名")}`,
+        fill: new ol.style.Fill({color: "#ff0000ff"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true
+      })
+    });
+    return [style];
+  }
+});
+map.getLayers().insertAt(3, shibeLayer);
+
+const chibutsuLayer = new ol.layer.VectorTile({
+  source: new ol.source.VectorTile({
+    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+    format: new ol.format.GeoJSON(),
+    tilePixelRatio: 8,
+    url: "./chibutsu.geojson",
+  }),
+  style: function(feature, resolution) {
+    const chibutsuKey = feature.get("名称")
+    if ((currentLayer.chibutsu || []).indexOf(chibutsuKey) < 0) return null;
+    const style = new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 5,
+        fill: new ol.style.Fill({color: "#0000ff66"}),
+        stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+      }),
+      text: new ol.style.Text({
+        textAlign: "left",
+        font: "Bold 16px/1 Verdana",
+        text: `${feature.get("名称")}`,
+        fill: new ol.style.Fill({color: "#0000ffcc"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true,
+        offsetX: 8
+      })
+    });
+    return [style];
+  }
+});
+map.getLayers().insertAt(3, chibutsuLayer);
+
+const yabaLayer = new ol.layer.VectorTile({
+  source: new ol.source.VectorTile({
+    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+    format: new ol.format.GeoJSON(),
+    tilePixelRatio: 8,
+    url: "./yaba.geojson",
+  }),
+  style: function(feature, resolution) {
+    if (currentLayer.id !== "uzura") return null;
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
+      text: new ol.style.Text({
+        font: "Bold 16px/1 Verdana",
+        text: "矢場川旧河道",
+        fill: new ol.style.Fill({color: "#0000ffff"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true
+      })
+    });
+    return [style];
+  }
+});
+map.getLayers().insertAt(3, yabaLayer);
+
+const hanumaLayer = new ol.layer.VectorTile({
+  source: new ol.source.VectorTile({
+    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+    format: new ol.format.GeoJSON(),
+    tilePixelRatio: 8,
+    url: "./hanuma.geojson",
+  }),
+  style: function(feature, resolution) {
+    if (currentLayer.id !== "nobe") return null;
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
+      text: new ol.style.Text({
+        font: "Bold 16px/1 Verdana",
+        text: "羽沼跡",
+        fill: new ol.style.Fill({color: "#0000ffff"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true
+      })
+    });
+    return [style];
+  }
+});
+map.getLayers().insertAt(3, hanumaLayer);
 
 itemSelector("yagoe");
 
