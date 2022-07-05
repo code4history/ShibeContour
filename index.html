@@ -111,6 +111,72 @@ var vlayers = [
   }
 ];
 
+// Styles
+const lineContourStyle = new ol.style.Style({
+  stroke: new ol.style.Stroke({color: "black", width: 1})
+});
+const lineContourBoldStyle = new ol.style.Style({
+  stroke: new ol.style.Stroke({color: "black", width: 2})
+});
+const arrowStyle = new ol.style.Style({
+  stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
+  fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
+});
+const textBasedStyles = {};
+const shibeStyleCreate = (text) => {
+  if (!textBasedStyles[text]) {
+    textBasedStyles[text] = new ol.style.Style({
+      stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
+      fill: new ol.style.Fill({color: "#ff000066", width: 3}),
+      text: new ol.style.Text({
+        font: "Bold 20px/1 Verdana",
+        text: text,
+        fill: new ol.style.Fill({color: "#ff0000ff"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true
+      })
+    });
+  }
+  return textBasedStyles[text];
+}
+const chibutsuStyleCreate = (text) => {
+  if (!textBasedStyles[text]) {
+    textBasedStyles[text] = new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 5,
+        fill: new ol.style.Fill({color: "#0000ff66"}),
+        stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+      }),
+      text: new ol.style.Text({
+        textAlign: "left",
+        font: "Bold 16px/1 Verdana",
+        text: text,
+        fill: new ol.style.Fill({color: "#0000ffcc"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true,
+        offsetX: 8
+      })
+    });
+  }
+  return textBasedStyles[text];
+}
+const suiikiStyleCreate = (text) => {
+  if (!textBasedStyles[text]) {
+    textBasedStyles[text] = new ol.style.Style({
+      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
+      text: new ol.style.Text({
+        font: "Bold 16px/1 Verdana",
+        text: text,
+        fill: new ol.style.Fill({color: "#0000ffff"}),
+        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+        overflow: true
+      })
+    });
+  }
+  return textBasedStyles[text];
+}
+
 let currentLayer;
 vlayers.forEach(function(vlayer) {
   const layerId = vlayer.id;
@@ -133,14 +199,10 @@ vlayers.forEach(function(vlayer) {
     opacity: 0.7,
     extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857'),
     style: function(feature, resolution) {
-      const weight = parseFloat(feature.get("description")) % 5 ? 1 : 2;
-      const style = new ol.style.Style({
-        stroke: new ol.style.Stroke({color: "black", width: weight})
-      });
-      return [style];
+      return parseFloat(feature.get("description")) % 5 ? [lineContourStyle] : [lineContourBoldStyle];
     }
   });
-  vlayer.kmlLayer = new ol.layer.VectorTile({
+  /*vlayer.kmlLayer = new ol.layer.VectorTile({
     source: new ol.source.VectorTile({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
       format: new ol.format.KML(),
@@ -161,7 +223,7 @@ vlayers.forEach(function(vlayer) {
       });
       return [style];
     }
-  });
+  });*/
   vlayer.tintLayer = new ol.layer.Tile({
     source: new ol.source.XYZ({
       attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
@@ -187,6 +249,7 @@ vlayers.forEach(function(vlayer) {
   item.addEventListener('click', function(e) {
     itemSelector(layerId);
   });
+
   layerList.appendChild(item);
 });
 
@@ -232,14 +295,9 @@ const arrowLayer = new ol.layer.VectorTile({
   }),
   style: function(feature, resolution) {
     if (currentLayer.id !== feature.get("target")) return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
-      fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
-    });
-    return [style];
+    return [arrowStyle];
   }
 });
-map.getLayers().insertAt(3, arrowLayer);
 
 const shibeLayer = new ol.layer.VectorTile({
   source: new ol.source.VectorTile({
@@ -251,21 +309,9 @@ const shibeLayer = new ol.layer.VectorTile({
   style: function(feature, resolution) {
     const shibeKey = `${feature.get("町村")}${feature.get("字名")}`
     if (currentLayer.shibe.indexOf(shibeKey) < 0) return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
-      fill: new ol.style.Fill({color: "#ff000066", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 20px/1 Verdana",
-        text: `${feature.get("町村")}${feature.get("字名")}`,
-        fill: new ol.style.Fill({color: "#ff0000ff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
-    return [style];
+    return [shibeStyleCreate(shibeKey)];
   }
 });
-map.getLayers().insertAt(3, shibeLayer);
 
 const chibutsuLayer = new ol.layer.VectorTile({
   source: new ol.source.VectorTile({
@@ -277,26 +323,9 @@ const chibutsuLayer = new ol.layer.VectorTile({
   style: function(feature, resolution) {
     const chibutsuKey = feature.get("名称")
     if ((currentLayer.chibutsu || []).indexOf(chibutsuKey) < 0) return null;
-    const style = new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 5,
-        fill: new ol.style.Fill({color: "#0000ff66"}),
-        stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      }),
-      text: new ol.style.Text({
-        textAlign: "left",
-        font: "Bold 16px/1 Verdana",
-        text: `${feature.get("名称")}`,
-        fill: new ol.style.Fill({color: "#0000ffcc"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true,
-        offsetX: 8
-      })
-    });
-    return [style];
+    return [chibutsuStyleCreate(chibutsuKey)];
   }
 });
-map.getLayers().insertAt(3, chibutsuLayer);
 
 const yabaLayer = new ol.layer.VectorTile({
   source: new ol.source.VectorTile({
@@ -307,21 +336,9 @@ const yabaLayer = new ol.layer.VectorTile({
   }),
   style: function(feature, resolution) {
     if (currentLayer.id !== "uzura") return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 16px/1 Verdana",
-        text: "矢場川旧河道",
-        fill: new ol.style.Fill({color: "#0000ffff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
-    return [style];
+    return [suiikiStyleCreate("矢場川旧河道")];
   }
 });
-map.getLayers().insertAt(3, yabaLayer);
 
 const hanumaLayer = new ol.layer.VectorTile({
   source: new ol.source.VectorTile({
@@ -332,20 +349,13 @@ const hanumaLayer = new ol.layer.VectorTile({
   }),
   style: function(feature, resolution) {
     if (currentLayer.id !== "nobe") return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 16px/1 Verdana",
-        text: "羽沼跡",
-        fill: new ol.style.Fill({color: "#0000ffff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
-    return [style];
+    return [suiikiStyleCreate("羽沼跡")];
   }
 });
+map.getLayers().insertAt(3, arrowLayer);
+map.getLayers().insertAt(3, shibeLayer);
+map.getLayers().insertAt(3, chibutsuLayer);
+map.getLayers().insertAt(3, yabaLayer);
 map.getLayers().insertAt(3, hanumaLayer);
 
 itemSelector("yagoe");
