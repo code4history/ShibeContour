@@ -17,18 +17,18 @@ var randomColor=function(){var r=null,e={};o("monochrome",null,[[0,0],[100,0]]),
 </head>
 <body>
 <div id="map" class="map"></div>
+<div id="ui">
+<div id="layerList"></div>
+<input id="slider" type="range" min="0" max="1" step="0.1" value="1" oninput="layer.setOpacity(this.value)">
+</div>
 <div id="popup" class="ol-popup">
   <div id="popup-content"></div>
 </div>
-<div id="layerList"></div>
-<input id="slider" type="range" min="0" max="1" step="0.1" value="1" oninput="layer.setOpacity(this.value)">
 <script>
 let map;
 let layer;
 
 if (window.location.protocol == 'file:' && window.location.search != '?skipalert=') alert('Please upload this directory to a web hosting or run a simple web server!');
-//let mapExtent = ol.proj.transformExtent([139.456320, 36.258566, 139.533060, 36.290880], 'EPSG:4326', 'EPSG:3857');
-var mapExtent = ol.proj.transformExtent([139.498380, 36.228800, 139.575110, 36.261161], 'EPSG:4326', 'EPSG:3857');
 const mapMinZoom = 10;
 const mapMaxZoom = 15;
 const pbfminzoom = 10;
@@ -38,7 +38,6 @@ const tintmaxzoom = 14;
 
 // Prepare style list
 var layerList = document.getElementById('layerList');
-var layerStyleMap = {}, layerStyleVisibility = {};
 var vlayers = [
   {
     "id":"yagoe",
@@ -101,11 +100,11 @@ var vlayers = [
 let currentLayer;
 vlayers.forEach(function(vlayer) {
   const layerId = vlayer.id;
-  //const pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
+  const pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
   const contoururl = `contour/${layerId}_contour.kml`;
   const tinturl = `https://grt.code4history.dev/cont7/${vlayer.tintminheight}/1/{z}/{x}/{y}`;
 
-  /*vlayer.pbfLayer = new ol.layer.VectorTile({
+  vlayer.pbfLayer = new ol.layer.VectorTile({
     source: new ol.source.VectorTile({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
       format: new ol.format.MVT(),
@@ -126,8 +125,8 @@ vlayers.forEach(function(vlayer) {
       });
       return [style];
     }
-  });*/
-  vlayer.pbfLayer = new ol.layer.VectorTile({
+  });
+  vlayer.kmlLayer = new ol.layer.VectorTile({
     source: new ol.source.VectorTile({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
       format: new ol.format.KML(),
@@ -149,9 +148,6 @@ vlayers.forEach(function(vlayer) {
       return [style];
     }
   });
-
-
-
   vlayer.tintLayer = new ol.layer.Tile({
     source: new ol.source.XYZ({
       attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
@@ -166,8 +162,6 @@ vlayers.forEach(function(vlayer) {
     opacity: 0.4,
     extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857')
   })
-
-  layerStyleVisibility[layerId] = true;
 
   var item = document.createElement('div');
   item.innerHTML = '<div style="' +
