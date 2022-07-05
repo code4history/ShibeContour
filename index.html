@@ -111,14 +111,41 @@ var vlayers = [
   }
 ];
 
-let currentLayer;
+let currentLayers = [];
 vlayers.forEach(function(vlayer) {
   const layerId = vlayer.id;
-  const pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
-  const contoururl = `contour/${layerId}_contour.kml`;
-  const tinturl = `https://grt.code4history.dev/cont7/${vlayer.tintminheight}/1/{z}/{x}/{y}`;
+  vlayer.pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
+  vlayer.contoururl = `contour/${layerId}_contour.kml`;
+  vlayer.tinturl = `https://grt.code4history.dev/cont7/${vlayer.tintminheight}/1/{z}/{x}/{y}`;
 
-  vlayer.pbfLayer = new ol.layer.VectorTile({
+  var item = document.createElement('div');
+  item.innerHTML = '<div style="' +
+    'background:black;' +
+    '"></div> ' + vlayer.title;
+  item.className = "hidden";
+  item.id = layerId;
+
+  item.addEventListener('click', function(e) {
+    itemSelector(layerId);
+  });
+  layerList.appendChild(item);
+});
+
+function itemSelector(layerId) {
+  const vlayer = vlayers.filter((vlayer) => { return vlayer.id === layerId })[0];
+  const item = document.querySelector(`#${layerId}`);
+  let currentLayer;
+  if (currentLayers.length) {
+    if (layerId === currentLayers[0].id) return;
+    currentLayer = currentLayers.shift();
+    for (let i = 0; i < currentLayers.length; i++) {
+      map.removeLayer(currentLayers[i]);
+    }
+    const currentItem = document.querySelector(`#${currentLayer.id}`);
+    currentItem.className = 'hidden';
+  }
+
+  const pbfLayer = new ol.layer.VectorTile({
     source: new ol.source.VectorTile({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
       format: new ol.format.MVT(),
@@ -128,7 +155,7 @@ vlayers.forEach(function(vlayer) {
         tileSize: 512,
       }),
       tilePixelRatio: 8,
-      url: pbfurl,
+      url: vlayer.pbfurl,
     }),
     opacity: 0.7,
     extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857'),
@@ -140,7 +167,7 @@ vlayers.forEach(function(vlayer) {
       return [style];
     }
   });
-  vlayer.kmlLayer = new ol.layer.VectorTile({
+  /*const kmlLayer = new ol.layer.VectorTile({
     source: new ol.source.VectorTile({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
       format: new ol.format.KML(),
@@ -161,11 +188,11 @@ vlayers.forEach(function(vlayer) {
       });
       return [style];
     }
-  });
-  vlayer.tintLayer = new ol.layer.Tile({
+  });*/
+  const tintLayer = new ol.layer.Tile({
     source: new ol.source.XYZ({
       attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
-      url: tinturl,
+      url: vlayer.tinturl,
       projection: "EPSG:3857",
       tileGrid: new ol.tilegrid.createXYZ({
         minZoom: tintminzoom,
@@ -175,39 +202,140 @@ vlayers.forEach(function(vlayer) {
     }),
     opacity: 0.4,
     extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857')
-  })
-
-  var item = document.createElement('div');
-  item.innerHTML = '<div style="' +
-    'background:black;' +
-    '"></div> ' + vlayer.title;
-  item.className = "hidden";
-  item.id = layerId;
-
-  item.addEventListener('click', function(e) {
-    itemSelector(layerId);
   });
-  layerList.appendChild(item);
-});
 
-function itemSelector(layerId) {
-  const vlayer = vlayers.filter((vlayer) => { return vlayer.id === layerId })[0];
-  const item = document.querySelector(`#${layerId}`);
-  if (currentLayer) {
-    if (layerId === currentLayer.id) return;
-    map.removeLayer(currentLayer.pbfLayer);
-    map.removeLayer(currentLayer.tintLayer);
-    const currentItem = document.querySelector(`#${currentLayer.id}`);
-    currentItem.className = 'hidden';
-  }
-  currentLayer = vlayer;
-  map.getLayers().insertAt(1, vlayer.tintLayer);
-  map.getLayers().insertAt(2, vlayer.pbfLayer);
-  shibeLayer.changed();
-  chibutsuLayer.changed();
-  yabaLayer.changed();
-  hanumaLayer.changed();
-  arrowLayer.changed();
+  const arrowLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./arrow.geojson",
+    }),
+    style: function(feature, resolution) {
+      if (vlayer.id !== feature.get("target")) return null;
+      const style = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
+        fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
+      });
+      return [style];
+    }
+  });
+
+  const shibeLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./shibe.geojson",
+    }),
+    style: function(feature, resolution) {
+      const shibeKey = `${feature.get("町村")}${feature.get("字名")}`
+      if (vlayer.shibe.indexOf(shibeKey) < 0) return null;
+      const style = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
+        fill: new ol.style.Fill({color: "#ff000066", width: 3}),
+        text: new ol.style.Text({
+          font: "Bold 20px/1 Verdana",
+          text: `${feature.get("町村")}${feature.get("字名")}`,
+          fill: new ol.style.Fill({color: "#ff0000ff"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true
+        })
+      });
+      return [style];
+    }
+  });
+
+
+  const chibutsuLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./chibutsu.geojson",
+    }),
+    style: function(feature, resolution) {
+      const chibutsuKey = feature.get("名称")
+      if ((vlayer.chibutsu || []).indexOf(chibutsuKey) < 0) return null;
+      const style = new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({color: "#0000ff66"}),
+          stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+        }),
+        text: new ol.style.Text({
+          textAlign: "left",
+          font: "Bold 16px/1 Verdana",
+          text: `${feature.get("名称")}`,
+          fill: new ol.style.Fill({color: "#0000ffcc"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true,
+          offsetX: 8
+        })
+      });
+      return [style];
+    }
+  });
+
+
+  const yabaLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./yaba.geojson",
+    }),
+    style: function(feature, resolution) {
+      if (vlayer.id !== "uzura") return null;
+      const style = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+        fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
+        text: new ol.style.Text({
+          font: "Bold 16px/1 Verdana",
+          text: "矢場川旧河道",
+          fill: new ol.style.Fill({color: "#0000ffff"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true
+        })
+      });
+      return [style];
+    }
+  });
+
+  const hanumaLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./hanuma.geojson",
+    }),
+    style: function(feature, resolution) {
+      if (vlayer.id !== "nobe") return null;
+      const style = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+        fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
+        text: new ol.style.Text({
+          font: "Bold 16px/1 Verdana",
+          text: "羽沼跡",
+          fill: new ol.style.Fill({color: "#0000ffff"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true
+        })
+      });
+      return [style];
+    }
+  });
+
+  map.getLayers().insertAt(1, tintLayer);
+  map.getLayers().insertAt(2, pbfLayer);
+  map.getLayers().insertAt(3, arrowLayer);
+  map.getLayers().insertAt(3, shibeLayer);
+  map.getLayers().insertAt(3, chibutsuLayer);
+  map.getLayers().insertAt(3, yabaLayer);
+  map.getLayers().insertAt(3, hanumaLayer);
+
+  currentLayers = [vlayer, tintLayer, pbfLayer, shibeLayer, chibutsuLayer, yabaLayer, hanumaLayer, arrowLayer];
+
   item.className = '';
   map.getView().setCenter(ol.proj.fromLonLat(vlayer.center));
 }
@@ -222,131 +350,6 @@ map = new ol.Map({
     minZoom: mapMinZoom,
   })
 });
-
-const arrowLayer = new ol.layer.VectorTile({
-  source: new ol.source.VectorTile({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./arrow.geojson",
-  }),
-  style: function(feature, resolution) {
-    if (currentLayer.id !== feature.get("target")) return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
-      fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
-    });
-    return [style];
-  }
-});
-map.getLayers().insertAt(3, arrowLayer);
-
-const shibeLayer = new ol.layer.VectorTile({
-  source: new ol.source.VectorTile({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./shibe.geojson",
-  }),
-  style: function(feature, resolution) {
-    const shibeKey = `${feature.get("町村")}${feature.get("字名")}`
-    if (currentLayer.shibe.indexOf(shibeKey) < 0) return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
-      fill: new ol.style.Fill({color: "#ff000066", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 20px/1 Verdana",
-        text: `${feature.get("町村")}${feature.get("字名")}`,
-        fill: new ol.style.Fill({color: "#ff0000ff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
-    return [style];
-  }
-});
-map.getLayers().insertAt(3, shibeLayer);
-
-const chibutsuLayer = new ol.layer.VectorTile({
-  source: new ol.source.VectorTile({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./chibutsu.geojson",
-  }),
-  style: function(feature, resolution) {
-    const chibutsuKey = feature.get("名称")
-    if ((currentLayer.chibutsu || []).indexOf(chibutsuKey) < 0) return null;
-    const style = new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 5,
-        fill: new ol.style.Fill({color: "#0000ff66"}),
-        stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      }),
-      text: new ol.style.Text({
-        textAlign: "left",
-        font: "Bold 16px/1 Verdana",
-        text: `${feature.get("名称")}`,
-        fill: new ol.style.Fill({color: "#0000ffcc"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true,
-        offsetX: 8
-      })
-    });
-    return [style];
-  }
-});
-map.getLayers().insertAt(3, chibutsuLayer);
-
-const yabaLayer = new ol.layer.VectorTile({
-  source: new ol.source.VectorTile({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./yaba.geojson",
-  }),
-  style: function(feature, resolution) {
-    if (currentLayer.id !== "uzura") return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 16px/1 Verdana",
-        text: "矢場川旧河道",
-        fill: new ol.style.Fill({color: "#0000ffff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
-    return [style];
-  }
-});
-map.getLayers().insertAt(3, yabaLayer);
-
-const hanumaLayer = new ol.layer.VectorTile({
-  source: new ol.source.VectorTile({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./hanuma.geojson",
-  }),
-  style: function(feature, resolution) {
-    if (currentLayer.id !== "nobe") return null;
-    const style = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 16px/1 Verdana",
-        text: "羽沼跡",
-        fill: new ol.style.Fill({color: "#0000ffff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
-    return [style];
-  }
-});
-map.getLayers().insertAt(3, hanumaLayer);
 
 itemSelector("yagoe");
 
