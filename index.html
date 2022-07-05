@@ -207,6 +207,7 @@ function itemSelector(layerId) {
   chibutsuLayer.changed();
   yabaLayer.changed();
   hanumaLayer.changed();
+  arrowLayer.changed();
   item.className = '';
   map.getView().setCenter(ol.proj.fromLonLat(vlayer.center));
 }
@@ -221,6 +222,24 @@ map = new ol.Map({
     minZoom: mapMinZoom,
   })
 });
+
+const arrowLayer = new ol.layer.VectorTile({
+  source: new ol.source.VectorTile({
+    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+    format: new ol.format.GeoJSON(),
+    tilePixelRatio: 8,
+    url: "./arrow.geojson",
+  }),
+  style: function(feature, resolution) {
+    if (currentLayer.id !== feature.get("target")) return null;
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
+      fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
+    });
+    return [style];
+  }
+});
+map.getLayers().insertAt(3, arrowLayer);
 
 const shibeLayer = new ol.layer.VectorTile({
   source: new ol.source.VectorTile({
