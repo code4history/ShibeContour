@@ -25,6 +25,14 @@ var randomColor=function(){var r=null,e={};o("monochrome",null,[[0,0],[100,0]]),
   <div id="popup-content"></div>
 </div>
 <script>
+const query = {};
+let hashes = (window.location.href.split('#!'))[0];
+hashes = hashes.slice(window.location.href.indexOf('?') + 1).split('&');
+for (let i = 0; i < hashes.length; i++) {
+  const hash = hashes[i].split('=');
+  query[hash[0]] = hash[1] === "true" ? true : hash[1] === "false" ? false : hash[1];
+}
+
 let map;
 let layer;
 
@@ -277,7 +285,6 @@ function itemSelector(layerId) {
 
 map = new ol.Map({
   target: 'map',
-  renderer: 'webgl',
   layers: [
   ],
   view: new ol.View({
@@ -359,7 +366,8 @@ map.getLayers().insertAt(5, chibutsuLayer);
 map.getLayers().insertAt(6, yabaLayer);
 map.getLayers().insertAt(7, hanumaLayer);
 
-itemSelector("yagoe");
+const startFrom = vlayers.filter(v => v.id === query["shibe"]).length ? query["shibe"] : "yagoe";
+itemSelector(startFrom);
 
 const gsiLayer = new ol.layer.Tile({
   source: new ol.source.XYZ({
