@@ -255,7 +255,8 @@ vlayers.forEach(function(vlayer) {
   item.id = layerId;
 
   item.addEventListener('click', function(e) {
-    itemSelector(layerId);
+    window.location.href = `${window.location.href.split("?")[0]}?shibe=${layerId}`
+    //itemSelector(layerId);
   });
 
   layerList.appendChild(item);
