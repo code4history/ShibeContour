@@ -8,19 +8,19 @@
   #ui{top:auto;left:0;right:0;bottom:0;width:100%;height:230px}
 }
 
-#ui{position:absolute}
+#ui{position:absolute;overflow:auto}
 
-#layerList{top:10px;right:10px;left:10px;width:280px;overflow:auto;position:relative}
+#layerList, #switchList{padding:10px;position:relative}
 #map,.ol-overlaycontainer-stopevent,body,html{overflow:hidden}
-#layerList div{color:#000;cursor:pointer}
-#layerList div.hidden{opacity:.3}
-#layerList div div{width:15px;height:15px;display:inline-block}
+#layerList li{color:#000;cursor:pointer;}
+#layerList li.hidden{opacity:.3}
 #osmCheckbox{left:10px}
 #osmCheckboxLabel{left:30px;text-shadow:#fff 0 0 8px}
-#slider{width:200px;top:10px;right:10px;background:#fff;color:#fff}
+/*#slider{width:200px;top:10px;right:10px;background:#fff;color:#fff}*/
+#slider{left:30px;right:30px;padding-top:10px;padding-bottom:10px;width:calc(100% - 60px);background:#fff;color:#fff;position:relative}
 body,html{width:100%;height:100%;margin:0;padding:0;background:#fff,color:#333;font-family:Arial,sans-serif;font-size:14px;line-height:1}
 
-#map,.ol-popup{position:absolute}
+/*#map,.ol-popup{position:absolute}
 .map-controls a.primary,.map-controls a.primary:active,.map-controls a.primary:focus,.map-controls a.primary:hover,.ol-control button.primary,.ol-control button.primary:active,.ol-control button.primary:focus,.ol-control button.primary:hover{color:#fff;background:#6941aa;border:1px solid #6941aa}
 .map-controls a:active,.map-controls a:focus,.map-controls a:hover,.ol-control button:active,.ol-control button:focus,.ol-control button:hover{color:#6941aa;background:#fff;border:1px solid #977dc7}
 .map-controls a .disabled,.map-controls a.disabled,.ol-control button .disabled,.ol-control button.disabled{background-color:#e6e6e6}
@@ -41,4 +41,4 @@ body,html{width:100%;height:100%;margin:0;padding:0;background:#fff,color:#333;f
 .inspect-layer:not(:first-child){border-top:1px solid #ccc}
 .inspect-row{display:table-row;line-height:1.8}
 .inspect-name,.inspect-value{display:table-cell}
-.inspect-value{padding-left:10px}
+.inspect-value{padding-left:10px}*/
