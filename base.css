@@ -10,7 +10,14 @@
 
 #ui{position:absolute;overflow:auto}
 
-#layerList, #switchList{padding:10px;position:relative}
+#layerList, #switchList, #tintList{padding:10px;position:relative}
+
+#tintTable{border-color:green;border-width:2px;padding:10px;height:20px;}
+#titleCenter{text-align:center}
+#titleLeft{float:left}
+#titleRight{float:right}
+
+.color {height: 20px;float:left;position:relative;width:calc(100% / 7)}
 #map,.ol-overlaycontainer-stopevent,body,html{overflow:hidden}
 #layerList li{color:#000;cursor:pointer;}
 #layerList li.hidden{opacity:.3}

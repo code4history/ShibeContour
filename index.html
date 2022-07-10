@@ -1,413 +1,431 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>邑楽郡シベ地名調査用サイト</title>
-<meta charset="utf-8">
-<meta http-equiv="imagetoolbar" content="no"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<!-- Openlayers -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/css/ol.css" type="text/css">
-<script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/build/ol.js"></script>
-<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL,Object.assign"></script>
-<!-- ol-ext -->
-<link rel="stylesheet" href="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.css" />
-<script type="text/javascript" src="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.js"></script>
-<link rel="stylesheet" href="./base.css" type="text/css">
+  <title>邑楽郡シベ地名調査用サイト</title>
+  <meta charset="utf-8">
+  <meta http-equiv="imagetoolbar" content="no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Openlayers -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/build/ol.js"></script>
+  <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL,Object.assign"></script>
+  <!-- ol-ext -->
+  <link rel="stylesheet" href="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.css" />
+  <script type="text/javascript" src="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.js"></script>
+  <link rel="stylesheet" href="./base.css" type="text/css">
 </head>
 <body>
 <div id="map" class="map"></div>
 <div id="ui">
-<h3>シベ地名一覧</h3>
-<div id="layerList">
-  <ul></ul>
-</div>
-<h3>地物透明度</h3>
-<input id="slider" type="range" min="0" max="1" step="0.1" value="1" oninput="setOpacity(this.value)">
-<h3>地物表示スイッチ</h3>
-<div id="switchList">
-  <input type="checkbox" id="pbfSw" checked="checked" onchange="togglePbf(this.checked)"> 等高線<br>
-  <input type="checkbox" id="tintSw" checked="checked" onchange="toggleTint(this.checked)"> 段彩図<br>
-  <input type="checkbox" id="shibeSw" checked="checked" onchange="toggleShibe(this.checked)"> シベ地名領域<br>
-  <input type="checkbox" id="chibutsuSw" checked="checked" onchange="toggleChibutsu(this.checked)"> 関連地物<br>
-  <input type="checkbox" id="arrowSw" checked="checked" onchange="toggleArrow(this.checked)"> 地形特徴矢印<br>
+  <h3>シベ地名一覧</h3>
+  <div id="layerList">
+    <ul></ul>
+  </div>
+  <h3>地物透明度</h3>
+  <input id="slider" type="range" min="0" max="1" step="0.1" value="1" oninput="setOpacity(this.value)">
+  <h3>地物表示スイッチ</h3>
+  <div id="switchList">
+    <input type="checkbox" id="pbfSw" checked="checked" onchange="togglePbf(this.checked)"> 等高線<br>
+    <input type="checkbox" id="tintSw" checked="checked" onchange="toggleTint(this.checked)"> 段彩図<br>
+    <input type="checkbox" id="shibeSw" checked="checked" onchange="toggleShibe(this.checked)"> シベ地名領域<br>
+    <input type="checkbox" id="chibutsuSw" checked="checked" onchange="toggleChibutsu(this.checked)"> 関連地物<br>
+    <input type="checkbox" id="arrowSw" checked="checked" onchange="toggleArrow(this.checked)"> 地形特徴矢印<br>
+  </div>
+  <h3>段彩図色テーブル</h3>
+  <div id="tintList">
+    <div id="tintTitle">
+      <div id="titleLeft"></div>
+      <div id="titleRight"></div>
+      <div id="titleCenter">標高(単位m)</div>
+    </div>
+    <div id="tintTable">
+      <div class="color" style="background-color: rgb(0, 0, 255)"></div>
+      <div class="color" style="background-color: rgb(0, 149, 255)"></div>
+      <div class="color" style="background-color: rgb(0, 238, 255)"></div>
+      <div class="color" style="background-color: rgb(145, 255, 0)"></div>
+      <div class="color" style="background-color: rgb(255, 255, 0)"></div>
+      <div class="color" style="background-color: rgb(255, 140, 0)"></div>
+      <div class="color" style="background-color: rgb(255, 68, 0)"></div>
+    </div>
+  </div>
 </div>
 <script>
-const query = {};
-let hashes = (window.location.href.split('#!'))[0];
-hashes = hashes.slice(window.location.href.indexOf('?') + 1).split('&');
-for (let i = 0; i < hashes.length; i++) {
-  const hash = hashes[i].split('=');
-  query[hash[0]] = hash[1] === "true" ? true : hash[1] === "false" ? false : hash[1];
-}
-
-let map;
-let layer;
-
-const mapMinZoom = 10;
-const mapMaxZoom = 15;
-const pbfminzoom = 10;
-const pbfmaxzoom = 15;
-const tintminzoom = 8;
-const tintmaxzoom = 14;
-let opacity = 1;
-let pbfSwitch = 1;
-let tintSwitch = 1;
-let shibeSwitch = 1;
-let chibutsuSwitch = 1;
-let arrowSwitch = 1;
-
-// Prepare style list
-var layerList = document.querySelector("#layerList ul");
-var vlayers = [
-  {
-    "id":"yagoe",
-    "tintminheight": 18,
-    "shibe": ["館林町谷越町"],
-    "chibutsu": ["夜明稲荷 (加法師)","宵稲荷 (侍辺)","小柳清水","館林城"],
-    "title": "館林市本町2丁目（谷越町）侍辺",
-    "extent": [139.498380, 36.228800, 139.575110, 36.261161],
-    "center": [139.536745, 36.244980]
-  },
-  {
-    "id":"akouda",
-    "tintminheight": 16, //15,
-    "shibe": ["赤生田村侍邊"],
-    "chibutsu": ["侍辺城"],
-    "title": "館林市赤生田本町 侍辺",
-    "extent": [139.524730, 36.204321, 139.601460, 36.236692],
-    "center": [139.563095, 36.220506]
-  },
-  {
-    "id":"narushima",
-    "tintminheight": 22,
-    "shibe": ["成島村大志邊"],
-    "chibutsu": ["成島城"],
-    "title": "館林市成島町 大志辺",
-    "extent": [139.456450, 36.228488, 139.533190, 36.260850],
-    "center": [139.494820, 36.244669]
-  },
-  {
-    "id":"nobe",
-    "tintminheight": 17,
-    "shibe": ["野邊村志部"],
-    "title": "館林市野辺町 志部",
-    "extent": [139.437910, 36.199161, 139.514650, 36.231535],
-    "center": [139.476280, 36.215348]
-  },
-  {
-    "id":"iino",
-    "tintminheight": 13,
-    "shibe": ["飯野村侍邊"],
-    "chibutsu": ["飯野城"],
-    "title": "邑楽郡板倉町飯野 侍辺",
-    "extent": [139.572240, 36.193377, 139.648970, 36.225753],
-    "center": [139.610605, 36.209565]
-  },
-  {
-    "id":"uzura",
-    "tintminheight": 22, //21
-    "shibe": ["鶉村上志邊", "鶉村下志邊"],
-    "title": "邑楽郡邑楽町鶉 上志辺 下志辺",
-    "extent": [139.456320, 36.258566, 139.533060, 36.290880],
-    "center": [139.494690, 36.274723]
-  },
-  {
-    "id":"oizumi",
-    "tintminheight": 32, //30,
-    "shibe": ["上小泉村、坂田村志部"],
-    "chibutsu": ["小泉城"],
-    "title": "邑楽郡大泉町上小泉/坂田 志部",
-    "extent": [139.369810, 36.245069, 139.446540, 36.277423],
-    "center": [139.408175, 36.261246]
-  },
-  {
-    "id":"akaiwa",
-    "tintminheight": 20, //19,
-    "shibe": ["赤岩村湿邊"],
-    "chibutsu": ["赤岩城"],
-    "title": "邑楽郡千代田町赤岩 湿辺",
-    "extent": [139.406540, 36.195698, 139.483280, 36.228073],
-    "center": [139.444910, 36.211885]
+  const query = {};
+  let hashes = (window.location.href.split('#!'))[0];
+  hashes = hashes.slice(window.location.href.indexOf('?') + 1).split('&');
+  for (let i = 0; i < hashes.length; i++) {
+    const hash = hashes[i].split('=');
+    query[hash[0]] = hash[1] === "true" ? true : hash[1] === "false" ? false : hash[1];
   }
-];
 
-// Styles
-const lineContourStyle = new ol.style.Style({
-  stroke: new ol.style.Stroke({color: "black", width: 1})
-});
-const lineContourBoldStyle = new ol.style.Style({
-  stroke: new ol.style.Stroke({color: "black", width: 2})
-});
-const arrowStyle = new ol.style.Style({
-  stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
-  fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
-});
-const textBasedStyles = {};
-const shibeStyleCreate = (text) => {
-  if (!textBasedStyles[text]) {
-    textBasedStyles[text] = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
-      fill: new ol.style.Fill({color: "#ff000066", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 20px/1 Verdana",
-        text: text,
-        fill: new ol.style.Fill({color: "#ff0000ff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
-    });
+  let map;
+  let layer;
+
+  const mapMinZoom = 10;
+  const mapMaxZoom = 15;
+  const pbfminzoom = 10;
+  const pbfmaxzoom = 15;
+  const tintminzoom = 8;
+  const tintmaxzoom = 14;
+  let opacity = 1;
+  let pbfSwitch = 1;
+  let tintSwitch = 1;
+  let shibeSwitch = 1;
+  let chibutsuSwitch = 1;
+  let arrowSwitch = 1;
+
+  const tintMinVal = document.querySelector("#titleLeft");
+  const tintMaxVal = document.querySelector("#titleRight");
+  // Prepare style list
+  const layerList = document.querySelector("#layerList ul");
+  const vlayers = [
+    {
+      "id":"yagoe",
+      "tintminheight": 18,
+      "shibe": ["館林町谷越町"],
+      "chibutsu": ["夜明稲荷 (加法師)","宵稲荷 (侍辺)","小柳清水","館林城"],
+      "title": "館林市本町2丁目（谷越町）侍辺",
+      "extent": [139.498380, 36.228800, 139.575110, 36.261161],
+      "center": [139.536745, 36.244980]
+    },
+    {
+      "id":"akouda",
+      "tintminheight": 16, //15,
+      "shibe": ["赤生田村侍邊"],
+      "chibutsu": ["侍辺城"],
+      "title": "館林市赤生田本町 侍辺",
+      "extent": [139.524730, 36.204321, 139.601460, 36.236692],
+      "center": [139.563095, 36.220506]
+    },
+    {
+      "id":"narushima",
+      "tintminheight": 22,
+      "shibe": ["成島村大志邊"],
+      "chibutsu": ["成島城"],
+      "title": "館林市成島町 大志辺",
+      "extent": [139.456450, 36.228488, 139.533190, 36.260850],
+      "center": [139.494820, 36.244669]
+    },
+    {
+      "id":"nobe",
+      "tintminheight": 17,
+      "shibe": ["野邊村志部"],
+      "title": "館林市野辺町 志部",
+      "extent": [139.437910, 36.199161, 139.514650, 36.231535],
+      "center": [139.476280, 36.215348]
+    },
+    {
+      "id":"iino",
+      "tintminheight": 13,
+      "shibe": ["飯野村侍邊"],
+      "chibutsu": ["飯野城"],
+      "title": "邑楽郡板倉町飯野 侍辺",
+      "extent": [139.572240, 36.193377, 139.648970, 36.225753],
+      "center": [139.610605, 36.209565]
+    },
+    {
+      "id":"uzura",
+      "tintminheight": 22, //21
+      "shibe": ["鶉村上志邊", "鶉村下志邊"],
+      "title": "邑楽郡邑楽町鶉 上志辺 下志辺",
+      "extent": [139.456320, 36.258566, 139.533060, 36.290880],
+      "center": [139.494690, 36.274723]
+    },
+    {
+      "id":"oizumi",
+      "tintminheight": 32, //30,
+      "shibe": ["上小泉村、坂田村志部"],
+      "chibutsu": ["小泉城"],
+      "title": "邑楽郡大泉町上小泉/坂田 志部",
+      "extent": [139.369810, 36.245069, 139.446540, 36.277423],
+      "center": [139.408175, 36.261246]
+    },
+    {
+      "id":"akaiwa",
+      "tintminheight": 20, //19,
+      "shibe": ["赤岩村湿邊"],
+      "chibutsu": ["赤岩城"],
+      "title": "邑楽郡千代田町赤岩 湿辺",
+      "extent": [139.406540, 36.195698, 139.483280, 36.228073],
+      "center": [139.444910, 36.211885]
+    }
+  ];
+
+  // Styles
+  const lineContourStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({color: "black", width: 1})
+  });
+  const lineContourBoldStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({color: "black", width: 2})
+  });
+  const arrowStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({color: "#ff00ffcc", width: 3}),
+    fill: new ol.style.Fill({color: "#ff00ffaa", width: 3})
+  });
+  const textBasedStyles = {};
+  const shibeStyleCreate = (text) => {
+    if (!textBasedStyles[text]) {
+      textBasedStyles[text] = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: "#ff0000ff", width: 3}),
+        fill: new ol.style.Fill({color: "#ff000066", width: 3}),
+        text: new ol.style.Text({
+          font: "Bold 20px/1 Verdana",
+          text: text,
+          fill: new ol.style.Fill({color: "#ff0000ff"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true
+        })
+      });
+    }
+    return textBasedStyles[text];
   }
-  return textBasedStyles[text];
-}
-const chibutsuStyleCreate = (text) => {
-  if (!textBasedStyles[text]) {
-    textBasedStyles[text] = new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 5,
-        fill: new ol.style.Fill({color: "#0000ff66"}),
+  const chibutsuStyleCreate = (text) => {
+    if (!textBasedStyles[text]) {
+      textBasedStyles[text] = new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({color: "#0000ff66"}),
+          stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+        }),
+        text: new ol.style.Text({
+          textAlign: "left",
+          font: "Bold 16px/1 Verdana",
+          text: text,
+          fill: new ol.style.Fill({color: "#0000ffcc"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true,
+          offsetX: 8
+        })
+      });
+    }
+    return textBasedStyles[text];
+  }
+  const suiikiStyleCreate = (text) => {
+    if (!textBasedStyles[text]) {
+      textBasedStyles[text] = new ol.style.Style({
         stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
+        fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
+        text: new ol.style.Text({
+          font: "Bold 16px/1 Verdana",
+          text: text,
+          fill: new ol.style.Fill({color: "#0000ffff"}),
+          stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
+          overflow: true
+        })
+      });
+    }
+    return textBasedStyles[text];
+  }
+
+  let currentLayer;
+  vlayers.forEach(function(vlayer) {
+    const layerId = vlayer.id;
+    const pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
+    const tinturl = `https://grt.code4history.dev/cont7/${vlayer.tintminheight}/1/{z}/{x}/{y}`;
+    vlayer.pbfLayer = new ol.layer.VectorTile({
+      source: new ol.source.VectorTile({
+        attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+        format: new ol.format.MVT(),
+        tileGrid: new ol.tilegrid.createXYZ({
+          minZoom: pbfminzoom,
+          maxZoom: pbfmaxzoom,
+          tileSize: 512,
+        }),
+        tilePixelRatio: 8,
+        url: pbfurl,
       }),
-      text: new ol.style.Text({
-        textAlign: "left",
-        font: "Bold 16px/1 Verdana",
-        text: text,
-        fill: new ol.style.Fill({color: "#0000ffcc"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true,
-        offsetX: 8
-      })
+      opacity: 0.7 * opacity * pbfSwitch,
+      extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857'),
+      style: function(feature, resolution) {
+        return parseFloat(feature.get("description")) % 5 ? [lineContourStyle] : [lineContourBoldStyle];
+      }
     });
-  }
-  return textBasedStyles[text];
-}
-const suiikiStyleCreate = (text) => {
-  if (!textBasedStyles[text]) {
-    textBasedStyles[text] = new ol.style.Style({
-      stroke: new ol.style.Stroke({color: "#0000ffff", width: 3}),
-      fill: new ol.style.Fill({color: "#0000ff66", width: 3}),
-      text: new ol.style.Text({
-        font: "Bold 16px/1 Verdana",
-        text: text,
-        fill: new ol.style.Fill({color: "#0000ffff"}),
-        stroke: new ol.style.Stroke({color: "#ffffffff", width: 1}),
-        overflow: true
-      })
+    vlayer.tintLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
+        url: tinturl,
+        projection: "EPSG:3857",
+        tileGrid: new ol.tilegrid.createXYZ({
+          minZoom: tintminzoom,
+          maxZoom: tintmaxzoom,
+          tileSize: 256,
+        }),
+      }),
+      opacity: 0.4 * opacity * pbfSwitch,
+      extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857')
+    })
+    const item = document.createElement('li');
+    item.innerHTML = vlayer.title;
+    item.className = "hidden";
+    item.id = layerId;
+    item.addEventListener('click', function(e) {
+      //window.location.href = `${window.location.href.split("?")[0]}?shibe=${layerId}`
+      itemSelector(layerId);
     });
+    layerList.appendChild(item);
+  });
+
+  function itemSelector(layerId) {
+    const vlayer = vlayers.filter((vlayer) => { return vlayer.id === layerId })[0];
+    const item = document.querySelector(`#${layerId}`);
+    if (currentLayer) {
+      if (layerId === currentLayer.id) return;
+      map.removeLayer(currentLayer.pbfLayer);
+      map.removeLayer(currentLayer.tintLayer);
+      const currentItem = document.querySelector(`#${currentLayer.id}`);
+      currentItem.className = 'hidden';
+    }
+    currentLayer = vlayer;
+    map.getLayers().insertAt(1, vlayer.tintLayer);
+    map.getLayers().insertAt(2, vlayer.pbfLayer);
+    shibeLayer.changed();
+    chibutsuLayer.changed();
+    yabaLayer.changed();
+    hanumaLayer.changed();
+    arrowLayer.changed();
+    tintMinVal.innerHTML = `${vlayer.tintminheight}`;
+    tintMaxVal.innerHTML = `${vlayer.tintminheight + 6}`;
+    item.className = '';
+    map.getView().setCenter(ol.proj.fromLonLat(vlayer.center));
   }
-  return textBasedStyles[text];
-}
 
-let currentLayer;
-vlayers.forEach(function(vlayer) {
-  const layerId = vlayer.id;
-  const pbfurl =`${layerId}/{z}/{x}/{y}.pbf`;
-  const tinturl = `https://grt.code4history.dev/cont7/${vlayer.tintminheight}/1/{z}/{x}/{y}`;
+  function setOpacity(value) {
+    opacity = parseFloat(value);
+    representOpacity();
+  }
 
-  vlayer.pbfLayer = new ol.layer.VectorTile({
-    source: new ol.source.VectorTile({
+  function representOpacity() {
+    vlayers.forEach((vlayer) => {
+      vlayer.pbfLayer.setOpacity(0.7 * opacity * pbfSwitch);
+      vlayer.tintLayer.setOpacity(0.4 * opacity * tintSwitch);
+    })
+    shibeLayer.setOpacity(opacity * shibeSwitch);
+    chibutsuLayer.setOpacity(opacity * chibutsuSwitch);
+    yabaLayer.setOpacity(opacity * chibutsuSwitch);
+    hanumaLayer.setOpacity(opacity * chibutsuSwitch);
+    arrowLayer.setOpacity(opacity * arrowSwitch);
+  }
+
+  map = new ol.Map({
+    target: 'map',
+    layers: [],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([139.494690, 36.274723]),
+      zoom: 13,
+      minZoom: mapMinZoom,
+    })
+  });
+  const gps = new ol.control.GeolocationButton({
+    delay: 20000
+  });
+  map.addControl(gps);
+
+  const arrowLayer = new ol.layer.Vector({
+    source: new ol.source.Vector({
       attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-      format: new ol.format.MVT(),
-      tileGrid: new ol.tilegrid.createXYZ({
-        minZoom: pbfminzoom,
-        maxZoom: pbfmaxzoom,
-        tileSize: 512,
-      }),
+      format: new ol.format.GeoJSON(),
       tilePixelRatio: 8,
-      url: pbfurl,
+      url: "./arrow.geojson",
     }),
-    opacity: 0.7 * opacity * pbfSwitch,
-    extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857'),
     style: function(feature, resolution) {
-      return parseFloat(feature.get("description")) % 5 ? [lineContourStyle] : [lineContourBoldStyle];
+      if (currentLayer.id !== feature.get("target")) return null;
+      return [arrowStyle];
     }
   });
-  vlayer.tintLayer = new ol.layer.Tile({
-    source: new ol.source.XYZ({
-      attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
-      url: tinturl,
-      projection: "EPSG:3857",
-      tileGrid: new ol.tilegrid.createXYZ({
-        minZoom: tintminzoom,
-        maxZoom: tintmaxzoom,
-        tileSize: 256,
-      }),
+
+
+  const shibeLayer = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./shibe.geojson",
     }),
-    opacity: 0.4 * opacity * pbfSwitch,
-    extent: ol.proj.transformExtent(vlayer.extent, 'EPSG:4326', 'EPSG:3857')
-  })
-
-  var item = document.createElement('li');
-  item.innerHTML = vlayer.title;
-  item.className = "hidden";
-  item.id = layerId;
-
-  item.addEventListener('click', function(e) {
-    //window.location.href = `${window.location.href.split("?")[0]}?shibe=${layerId}`
-    itemSelector(layerId);
+    style: function(feature, resolution) {
+      const shibeKey = `${feature.get("町村")}${feature.get("字名")}`
+      if (currentLayer.shibe.indexOf(shibeKey) < 0) return null;
+      return [shibeStyleCreate(shibeKey)];
+    }
   });
 
-  layerList.appendChild(item);
-});
+  const chibutsuLayer = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./chibutsu.geojson",
+    }),
+    style: function(feature, resolution) {
+      const chibutsuKey = feature.get("名称")
+      if ((currentLayer.chibutsu || []).indexOf(chibutsuKey) < 0) return null;
+      return [chibutsuStyleCreate(chibutsuKey)];
+    }
+  });
 
-function itemSelector(layerId) {
-  const vlayer = vlayers.filter((vlayer) => { return vlayer.id === layerId })[0];
-  const item = document.querySelector(`#${layerId}`);
-  if (currentLayer) {
-    if (layerId === currentLayer.id) return;
-    map.removeLayer(currentLayer.pbfLayer);
-    map.removeLayer(currentLayer.tintLayer);
-    const currentItem = document.querySelector(`#${currentLayer.id}`);
-    currentItem.className = 'hidden';
-  }
-  currentLayer = vlayer;
-  map.getLayers().insertAt(1, vlayer.tintLayer);
-  map.getLayers().insertAt(2, vlayer.pbfLayer);
-  shibeLayer.changed();
-  chibutsuLayer.changed();
-  yabaLayer.changed();
-  hanumaLayer.changed();
-  arrowLayer.changed();
-  item.className = '';
-  map.getView().setCenter(ol.proj.fromLonLat(vlayer.center));
-}
+  const yabaLayer = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./yaba.geojson",
+    }),
+    style: function(feature, resolution) {
+      if (currentLayer.id !== "uzura") return null;
+      return [suiikiStyleCreate("矢場川旧河道")];
+    }
+  });
 
-function setOpacity(value) {
-  opacity = parseFloat(value);
-  representOpacity();
-}
+  const hanumaLayer = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
+      format: new ol.format.GeoJSON(),
+      tilePixelRatio: 8,
+      url: "./hanuma.geojson",
+    }),
+    style: function(feature, resolution) {
+      if (currentLayer.id !== "nobe") return null;
+      return [suiikiStyleCreate("羽沼跡")];
+    }
+  });
+  map.getLayers().insertAt(3, arrowLayer);
+  map.getLayers().insertAt(4, shibeLayer);
+  map.getLayers().insertAt(5, chibutsuLayer);
+  map.getLayers().insertAt(6, yabaLayer);
+  map.getLayers().insertAt(7, hanumaLayer);
 
-function representOpacity() {
-  vlayers.forEach((vlayer) => {
-    vlayer.pbfLayer.setOpacity(0.7 * opacity * pbfSwitch);
-    vlayer.tintLayer.setOpacity(0.4 * opacity * tintSwitch);
+  const startFrom = vlayers.filter(v => v.id === query["shibe"]).length ? query["shibe"] : "yagoe";
+  itemSelector(startFrom);
+
+  const gsiLayer = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
+      url: "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
+      projection: "EPSG:3857"
+    })
   })
-  shibeLayer.setOpacity(opacity * shibeSwitch);
-  chibutsuLayer.setOpacity(opacity * chibutsuSwitch);
-  yabaLayer.setOpacity(opacity * chibutsuSwitch);
-  hanumaLayer.setOpacity(opacity * chibutsuSwitch);
-  arrowLayer.setOpacity(opacity * arrowSwitch);
-}
+  map.getLayers().insertAt(0, gsiLayer);
 
-map = new ol.Map({
-  target: 'map',
-  layers: [
-  ],
-  view: new ol.View({
-    center: ol.proj.fromLonLat([139.494690, 36.274723]),
-    zoom: 13,
-    minZoom: mapMinZoom,
-  })
-});
-const gps = new ol.control.GeolocationButton({
-  delay: 20000
-});
-map.addControl(gps);
-
-const arrowLayer = new ol.layer.Vector({
-  source: new ol.source.Vector({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./arrow.geojson",
-  }),
-  style: function(feature, resolution) {
-    if (currentLayer.id !== feature.get("target")) return null;
-    return [arrowStyle];
+  function togglePbf(value) {
+    pbfSwitch = value ? 1 : 0;
+    representOpacity();
   }
-});
-
-const shibeLayer = new ol.layer.Vector({
-  source: new ol.source.Vector({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./shibe.geojson",
-  }),
-  style: function(feature, resolution) {
-    const shibeKey = `${feature.get("町村")}${feature.get("字名")}`
-    if (currentLayer.shibe.indexOf(shibeKey) < 0) return null;
-    return [shibeStyleCreate(shibeKey)];
+  function toggleTint(value) {
+    tintSwitch = value ? 1 : 0;
+    representOpacity();
   }
-});
-
-const chibutsuLayer = new ol.layer.Vector({
-  source: new ol.source.Vector({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./chibutsu.geojson",
-  }),
-  style: function(feature, resolution) {
-    const chibutsuKey = feature.get("名称")
-    if ((currentLayer.chibutsu || []).indexOf(chibutsuKey) < 0) return null;
-    return [chibutsuStyleCreate(chibutsuKey)];
+  function toggleShibe(value) {
+    shibeSwitch = value ? 1 : 0;
+    representOpacity();
   }
-});
-
-const yabaLayer = new ol.layer.Vector({
-  source: new ol.source.Vector({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./yaba.geojson",
-  }),
-  style: function(feature, resolution) {
-    if (currentLayer.id !== "uzura") return null;
-    return [suiikiStyleCreate("矢場川旧河道")];
+  function toggleChibutsu(value) {
+    chibutsuSwitch = value ? 1 : 0;
+    representOpacity();
   }
-});
-
-const hanumaLayer = new ol.layer.Vector({
-  source: new ol.source.Vector({
-    attributions: 'Rendered with <a href="https://www.maptiler.com/desktop/">MapTiler Desktop</a>',
-    format: new ol.format.GeoJSON(),
-    tilePixelRatio: 8,
-    url: "./hanuma.geojson",
-  }),
-  style: function(feature, resolution) {
-    if (currentLayer.id !== "nobe") return null;
-    return [suiikiStyleCreate("羽沼跡")];
+  function toggleArrow(value) {
+    arrowSwitch = value ? 1 : 0;
+    representOpacity();
   }
-});
-map.getLayers().insertAt(3, arrowLayer);
-map.getLayers().insertAt(4, shibeLayer);
-map.getLayers().insertAt(5, chibutsuLayer);
-map.getLayers().insertAt(6, yabaLayer);
-map.getLayers().insertAt(7, hanumaLayer);
-
-const startFrom = vlayers.filter(v => v.id === query["shibe"]).length ? query["shibe"] : "yagoe";
-itemSelector(startFrom);
-
-const gsiLayer = new ol.layer.Tile({
-  source: new ol.source.XYZ({
-    attributions: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>",
-    url: "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
-    projection: "EPSG:3857"
-  })
-})
-map.getLayers().insertAt(0, gsiLayer);
-
-function togglePbf(value) {
-  pbfSwitch = value ? 1 : 0;
-  representOpacity();
-}
-function toggleTint(value) {
-  tintSwitch = value ? 1 : 0;
-  representOpacity();
-}
-function toggleShibe(value) {
-  shibeSwitch = value ? 1 : 0;
-  representOpacity();
-}
-function toggleChibutsu(value) {
-  chibutsuSwitch = value ? 1 : 0;
-  representOpacity();
-}
-function toggleArrow(value) {
-  arrowSwitch = value ? 1 : 0;
-  representOpacity();
-}
 </script>
 </body>
-</html>8
+</html>
