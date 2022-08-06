@@ -1,0 +1,25 @@
+{
+  "name": "shibecontour",
+  "version": "1.0.0",
+  "description": "シベ地形での地形図",
+  "main": "here_mapmatcher.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/code4history/ShibeContour.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/code4history/ShibeContour/issues"
+  },
+  "homepage": "https://github.com/code4history/ShibeContour#readme",
+  "dependencies": {
+    "crypto-js": "^4.1.1",
+    "node-fetch": "^3.2.10",
+    "properties": "^1.2.1"
+  }
+}
